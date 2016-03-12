@@ -1,0 +1,128 @@
+<header class="mainHeader">
+  <form class="searchForm" task-search action="#" method="post">
+    <input type="text" placeholder="search">
+    <button type="button" class="btn btn-link" name="button">X</button>
+  </form>
+  <div style="flex-grow:1"></div>
+  <kebab>
+    <button class="btn btn-text">notifications</button>
+    <ul class="notifications">
+      <li>
+        <button class="btn btn-primary" ng-click="removeAllNotifs($event)">dismiss all</button>
+      </li>
+      <li ng-repeat="notif in notifs | reverseObject" class="notification flex">
+        <button class="btn btn-success" ng-click="removeNotif($event, notif._id)">X</button>
+        <p class="btn btn-link">{{notif.message}}</p>
+      </li>
+    </ul>
+  </kebab>
+  <kebab>
+    <button class="btn btn-text">{{username}}</button>
+    <div class="preferencesBlock">
+      <a class="btn btn-primary" href="/user/logout">log out</a>
+    </div>
+  </kebab>
+  <kebab>
+    <button class="btn btn-text">preferences</button>
+    <div class="preferencesBlock">
+      <input type="checkbox" ng-model="user.settings.allowSharing" ng-click="toggleAllowSharing($event)" id="allowSharingCheckbox">
+      <label class="btn btn-primary" for="allowSharingCheckbox">other users share their lists with you</label>
+    </div>
+  </kebab>
+</header>
+
+<div class="main flex">
+  <div class="listsPane panel" ng-controller="ListsCtrl">
+
+    <form action="" class="addListForm" ng-submit="addList($event)">
+      <input type="text" maxlength="100" ng-model="newListName">
+      <button class="btn btn-success">add list</button>
+    </form>
+
+    <ul class="lists">
+      <li class="list flex ib" ng-repeat="list in lists" ng-click="selectList(list, true, false)" ng-class="{selected : isListSelected(list), notif: list.notif}">
+        <div angular-ripple></div>
+        <kebab>
+          <button class="btn btn-link">...</button>
+          <ul>
+            <li>
+              <button class="btn btn-text" ng-click="deleteList($event, list)">delete</button>
+            </li>
+            <li>
+              <button class="btn btn-text" ng-click="toggleListNameEditMode($event, list)">rename</button>
+            </li>
+            <li>
+              <button class="btn btn-text" ng-click="shareList($event, list)">share</button>
+            </li>
+          </ul>
+        </kebab>
+        <p spellcheck="false" ng-attr-contenteditable="{{ listNameEditMode === list}}" data-edit="updateName" data-toggle="toggleListNameEditMode" data-elemid="{{list._id}}" ng-model="list.name" class="bw">{{list.name}}</p>
+      </li>
+    </ul>
+
+  </div>
+
+  <div class="tasksPane flex" ng-controller="TasksCtrl">
+    <div ng-show="currentListId" class="tasksCol panel">
+      <form action="" ng-submit="addTask($event)">
+        <input type="text" maxlength="100" ng-model="newTaskName">
+        <button class="btn btn-success" ng-class="{pressed : filterTasksBy}">add task</button>
+      </form>
+      <button class="btn btn-success btnShowCompleted" ng-click="toggleShowOnlyCompleted()">show only completed</button>
+      <ul class="tasks">
+        <li class="task flex" ng-click="selectTask(task, true)" ng-repeat="task in tasks" ng-show="task[taskFilterProp]" ng-class="{selected : isTaskSelected(task)}">
+          <div angular-ripple></div>
+          <kebab>
+            <button class="btn btn-link">...</button>
+            <ul>
+              <li>
+                <button class="btn btn-text" ng-click="deleteTask($event, task)">delete</button>
+              </li>
+              <li>
+                <button class="btn btn-text" ng-click="toggleTaskNameEditMode($event, task)">rename</button>
+              </li>
+            </ul>
+          </kebab>
+          <div class="doneCheckbox" ng-click="changeTaskCompletedStatus($event, task)">
+            <input type="checkbox" ng-model="task.completed" id="{{task._id}}-done">
+            <label for="{{task._id}}-done"></label>
+          </div>
+          <div ng-attr-contenteditable="{{ taskNameEditMode === task}}" data-edit="updateName" data-toggle="toggleTaskNameEditMode" data-elemid="{{task._id}}" ng-model="task.name" class="bw done-{{task.completed}}">{{task.name}}</div>
+        </li>
+      </ul>
+    </div>
+    <div ng-show="selectedTask" class="detailsCol panel flex">
+      <input type="text" ng-model="selectedTask.name" maxlength="100" ng-change="updateName()">
+      <input type="checkbox" ng-click="changeTaskCompletedStatus($event)" ng-model="selectedTask.completed" id="taskCompleted">
+      <label class="btn btn-success" for="taskCompleted">completed</label>
+      <form ng-submit="addSubtask()">
+        <input type="text" placeholder="new subtask" maxlength="100" ng-model="newSubtaskName">
+        <button class="btn btn-success" ng-click="addSubtask()">add subtask</button>
+      </form>
+      <ul class="subtasks">
+        <li class="subtask flex" ng-repeat="subtask in selectedTask.subtasks">
+          <button class="btn btn-default" ng-click="deleteSubtask(subtask)">X</button>
+          <div class="doneCheckbox" ng-click="changeSubtaskCompletedStatus(subtask)">
+            <input type="checkbox" ng-model="subtask.completed" id="{{subtask.name}}-done">
+            <label for="{{subtask.name}}-done"></label>
+          </div>
+          <p class="bw done-{{subtask.completed}}">{{subtask.name}}</p>
+        </li>
+      </ul>
+      <form ng-submit="uploadAttachment($event)" class="uploadAttachmentForm">
+        <input type="file" file-input="files" />
+        <button class="btn btn-success">Upload</button>
+      </form>
+      <ul class="attachments">
+        <li class="attachment" ng-repeat="attachment in selectedTask.attachments">
+          <button class="btn btn-default" ng-click="deleteAttachment(attachment)">X</button>
+          <a href="/files/{{attachment.filename}}">{{attachment.name}}</a>
+        </li>
+      </ul>
+      <textarea ng-model="selectedTask.comment" ng-change="updateComment()" maxlength="1500"  placeholder="description" <!-- cols="30" rows="10" -->></textarea>
+    </div>
+  </div>
+</div>
+<div class="msgBox" id="msgBox">
+  <button class="btn" ng-click="closeMsg">X</button>
+</div>

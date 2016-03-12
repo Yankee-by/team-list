@@ -1,0 +1,54 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0')
+    title Login
+    link(rel='stylesheet', href='/css/login/style.css')
+  body
+    #message
+    .form
+      ul.tab-group
+        li.tab.active
+          a(href='#signup') Sign Up
+        li.tab
+          a(href='#login') Log In
+      .tab-content
+        #signup
+          h1 Sign Up for Free
+          form#signUpForm(action='/user/register', method='post')
+            .field-wrap
+              label.active
+                | Email Address
+                span.req *
+              input#usernameRegister(type='email', name='username', required='', autocomplete='off')
+            .field-wrap
+              label.active
+                | Set Password
+                span.req *
+              input#passwordRegister(type='password', name='password', required='', autocomplete='off')
+            //.field-wrap
+              label
+                | Confirm Password
+                span.req *
+              input#Confirmpassword(type='password', name='Confirmpassword', required='', autocomplete='off')
+            button#registerSubmit.button.button-block(type='submit') Get Started
+        #login
+          h1 Welcome Back!
+          form#logInForm(action='/user/login', method='post')
+            .field-wrap
+              label.active
+                | Email Address
+                span.req *
+              input#usernameLogin(type='email', name='username', required='', autocomplete='off')
+            .field-wrap
+              label.active
+                | Password
+                span.req *
+              input#passwordLogin(type='password', name='password', required='', autocomplete='off')
+            .field-wrap
+              input#RememberMe(type='checkbox', name='RememberMe')
+              label(for='RememberMe')
+            // <p class="forgot"><a href="#">Forgot Password?</a></p>
+            button#loginSubmit.button.button-block Log In
+    script(src='/js/login/script.js')
