@@ -63,7 +63,15 @@ function initCtrls(io) {
     register: (req, res) => {
       console.log('register');
       var username = req.body.username,
-          password = req.body.password;
+          password = req.body.password,
+          confirmPassword = req.body.confirmpassword;
+      console.log(req.body);
+      if (password !== confirmPassword) {
+        return res.json({err: 'confirm the password mate'});
+      }
+      if (typeof username !== 'string' || !username.match(/.+@.+/)) {
+        return res.json({err: 'email address is not valid'});
+      }
       UserAuth.register(new UserAuth({
         username: username,
         settings: {
@@ -218,8 +226,6 @@ function initCtrls(io) {
         .then(() => gfs.findAndRemoveAsync({'parentListId': listId}))
         .then(() => socket.broadcast.in(listId).emit('listDeleted', {
           listId: listId
-          //todo wtf is goin on
-          // ,          notif: notif
         }))
         .then(() => fn({ok: true}))
         .catch((err) => fn({err: err}))
@@ -378,7 +384,6 @@ function initCtrls(io) {
 
       gfs.findOneAsync({filename: filename})
       .then((file) => {
-        console.log(file);
         taskId = file.metadata.parentTaskId;
         return gfs.removeAsync(file);
       })
@@ -420,7 +425,7 @@ function initCtrls(io) {
       .then((savedFile) => {
         task.attachments.push({
           name: savedFile.metadata.name,
-          filename: savedFile.filename
+          filename: savedFile.filename,
         });
         Task.save(task)
       })
@@ -431,7 +436,6 @@ function initCtrls(io) {
   };
 
   return ctrls;
-
 }
 
 

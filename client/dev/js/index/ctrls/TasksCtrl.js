@@ -36,6 +36,11 @@ function TasksCtrl(TaskService, $scope, $location, $stateParams) {
     TaskService.selectTask(task, changeUrl);
     console.log();
   };
+  $scope.unselectTask = function(e) {
+    if(e.target === e.currentTarget) {
+      $scope.selectTask({_id:'reset'}, true);
+    }
+  }
   $scope.isTaskSelected = function(task) {
     return $scope.selectedTask === task;
   };
@@ -45,13 +50,6 @@ function TasksCtrl(TaskService, $scope, $location, $stateParams) {
   };
   $scope.changeSubtaskCompletedStatus = function() {
     TaskService.updateTask('subtasks');
-  };
-  $scope.filesChanged = function(elem) {
-    $scope.files = elem.files;
-    $scope.$apply();
-  };
-  $scope.uploadAttachment = function(e) {
-    TaskService.uploadAttachment(e, $scope.files);
   };
   $scope.deleteAttachment = function(attachment) {
     TaskService.deleteAttachment(attachment);

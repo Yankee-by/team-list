@@ -10,11 +10,11 @@ html(lang='en')
     .form
       ul.tab-group
         li.tab.active
-          a(href='#signup') Sign Up
+          a(href='#signup' data-tab="register") Sign Up
         li.tab
-          a(href='#login') Log In
+          a(href='#login' data-tab="login") Log In
       .tab-content
-        #signup
+        #signup.formCont.active
           h1 Sign Up for Free
           form#signUpForm(action='/user/register', method='post')
             .field-wrap
@@ -27,13 +27,13 @@ html(lang='en')
                 | Set Password
                 span.req *
               input#passwordRegister(type='password', name='password', required='', autocomplete='off')
-            //.field-wrap
-              label
+            .field-wrap
+              label.active
                 | Confirm Password
                 span.req *
-              input#Confirmpassword(type='password', name='Confirmpassword', required='', autocomplete='off')
+              input#confirmPassword(type='password', name='confirmpassword', required='', autocomplete='off')
             button#registerSubmit.button.button-block(type='submit') Get Started
-        #login
+        #login.formCont
           h1 Welcome Back!
           form#logInForm(action='/user/login', method='post')
             .field-wrap
@@ -46,7 +46,7 @@ html(lang='en')
                 | Password
                 span.req *
               input#passwordLogin(type='password', name='password', required='', autocomplete='off')
-            .field-wrap
+            //.field-wrap
               input#RememberMe(type='checkbox', name='RememberMe')
               label(for='RememberMe')
             // <p class="forgot"><a href="#">Forgot Password?</a></p>

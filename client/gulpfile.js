@@ -13,88 +13,99 @@ var gulp = require('gulp'),
     connect = require('gulp-connect'),
     print = require('gulp-print'),
     gutil = require('gulp-util'),
+    babel = require("gulp-babel"),
+    concatCss = require('gulp-concat-css'),
     folderName = 'dev';
 
 
-gulp.task('js', function(){
-   var libs = [
-      folderName + '/js/index/lib/angular.min.js',
-      folderName + '/js/index/lib/angular-ui-router.min.js'
-      ];
-   var main = [folderName + '/js/index/*.js'];
-   var stuff = [
-      folderName + '/js/index/ctrls/**/*.js',
-      folderName + '/js/index/directives/**/*.js',
-      folderName + '/js/index/filters/**/*.js',
-      folderName + '/js/index/services/**/*.js'
-   ]
-   var x = libs.concat(main, stuff);
-   console.log(x);
-   gulp.src(x)
-   .pipe(print())
-   // .pipe(jshint())
-   // .pipe(jshint.reporter('default'))
-   .pipe(concat('script.js'))
-   .pipe(wrap('(function(){<%= contents %>})()'))
-   .pipe(gulp.dest('build/js/index'));
+gulp.task('js', function() {
+  var libs = [
+  folderName + '/js/index/lib/angular.min.js',
+  folderName + '/js/index/lib/angular-ui-router.min.js'
+];
+  var main = [folderName + '/js/index/*.js'];
+  var stuff = [
+    folderName + '/js/index/ctrls/**/*.js',
+    folderName + '/js/index/directives/**/*.js',
+    folderName + '/js/index/filters/**/*.js',
+    folderName + '/js/index/services/**/*.js'
+  ]
+  gulp.src(libs.concat(main, stuff))
+  .pipe(print())
+  // .pipe(jshint())
+  // .pipe(jshint.reporter('default'))
+  .pipe(concat('script.js'))
+  // .pipe(babel())
+  // .pipe(uglify())
+  .pipe(wrap('(function(){<%= contents %>})()'))
+  .pipe(gulp.dest('build/js/index'));
 
-   gulp.src(folderName + '/js/login/**/*.js')
-   // .pipe(jshint())
-   // .pipe(jshint.reporter('default'))
-   .pipe(concat('script.js'))
-   .pipe(wrap('(function(){<%= contents %>})()'))
-   .pipe(gulp.dest('build/js/login'));
+  gulp.src(folderName + '/js/login/**/*.js')
+  // .pipe(jshint())
+  // .pipe(jshint.reporter('default'))
+  .pipe(concat('script.js'))
+  .pipe(babel())
+  .pipe(uglify())
+  .pipe(wrap('(function(){<%= contents %>})()'))
+  .pipe(gulp.dest('build/js/login'));
 });
 
-gulp.task('css', function(){
-   gulp.src(folderName + '/css/index/**/*.css')
-   .pipe(concat('style.css'))
-   .pipe(autoprefixer('last 2 versions'))
-   .pipe(cssmin())
-   .pipe(gulp.dest('build/css/index'));
+gulp.task('css', function() {
+  gulp.src(folderName + '/css/index/**/*.css')
+  .pipe(print())
+  .pipe(concatCss('style.css'))
+  .pipe(autoprefixer('last 2 versions'))
+  .pipe(cssmin())
+  .pipe(gulp.dest('build/css/index'));
 
-   gulp.src(folderName + '/css/login/**/*.css')
-   .pipe(concat('style.css'))
-   .pipe(autoprefixer('last 2 versions'))
-   .pipe(cssmin())
-   .pipe(gulp.dest('build/css/login'));
+  gulp.src(folderName + '/css/login/**/*.css')
+  .pipe(concat('style.css'))
+  .pipe(autoprefixer('last 2 versions'))
+  .pipe(cssmin())
+  .pipe(gulp.dest('build/css/login'));
 });
 
-gulp.task('html', function(){
-   gulp.src(folderName + '/**/*.html')
-   // .pipe(htmlmin({collapseWhitespace: true, ignoreCustomFragments: true}))
-   .pipe(gulp.dest('build/'));
+gulp.task('html', function() {
+  gulp.src(folderName + '/**/*.html')
+  // .pipe(htmlmin({collapseWhitespace: true, ignoreCustomFragments: true}))
+  .pipe(gulp.dest('build/'));
 });
 
-gulp.task('jade', function(){
-   gulp.src(folderName + '/**/*.jade')
-   .pipe(gulp.dest('build/'));
+gulp.task('jade', function() {
+  gulp.src(folderName + '/**/*.jade')
+  .pipe(gulp.dest('build/'));
 });
 
-gulp.task('images', function(){
-   gulp.src(folderName + '/img/**/*')
-   .pipe(image())
-   .pipe(gulp.dest('build/img'));
+gulp.task('fonts', function() {
+  gulp.src(folderName + '/fonts/**/*')
+  .pipe(gulp.dest('build/fonts'));
 });
 
-gulp.task('useref', function(){
-   gulp.src(folderName + '/js/**/*.js')
-   .pipe(useref())
-   .pipe(gulp.dest('build/js'));
+gulp.task('images', function() {
+  gulp.src(folderName + '/img/**/*')
+  .pipe(image())
+  .pipe(gulp.dest('build/img'));
 });
 
-gulp.task('watch', function(){
-   gulp.watch(folderName + '/js/**/*.js', ['js']);
-   gulp.watch(folderName + '/css/**/*.css', ['css']);
-   gulp.watch(folderName + '/partials/*.html', ['html']);
-   gulp.watch(folderName + '/*.jade', ['jade']);
+gulp.task('useref', function() {
+  gulp.src(folderName + '/js/**/*.js')
+  .pipe(useref())
+  .pipe(gulp.dest('build/js'));
 });
 
-gulp.task('connect', function(){
-    connect.server({
-        root: 'app',
-        livereload: true
-    });
+gulp.task('watch', function() {
+  gulp.watch(folderName + '/js/**/*.js', ['js']);
+  gulp.watch(folderName + '/css/**/*.css', ['css']);
+  gulp.watch(folderName + '/fonts/**/*', ['fonts']);
+  gulp.watch(folderName + '/partials/*.html', ['html']);
+  gulp.watch(folderName + '/*.jade', ['jade']);
 });
 
-gulp.task('default', ['js', 'css', 'html', 'images', 'jade', 'watch']);
+gulp.task('connect', function() {
+  connect.server({
+    root: 'app',
+    livereload: true
+  });
+});
+
+gulp.task('default', ['js', 'css', 'html', 'images', 'jade', 'fonts', 'watch']);

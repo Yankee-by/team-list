@@ -340,7 +340,7 @@ function MainCtrl(UserService, $scope, $location, $http, $stateParams, NotifServ
   $scope.removeAllNotifs = NotifService.removeAllNotifs;
   $scope.removeNotif = function(e, notifId) {
     e.stopPropagation();
-    NotifService.removeNotif(notifId);
+    NotifService.removeNotifById(notifId);
   };
 
   UserService.downloadUser();
@@ -386,6 +386,11 @@ function TasksCtrl(TaskService, $scope, $location, $stateParams) {
     TaskService.selectTask(task, changeUrl);
     console.log();
   };
+  $scope.unselectTask = function(e) {
+    if(e.target === e.currentTarget) {
+      $scope.selectTask({_id:'reset'}, true);
+    }
+  }
   $scope.isTaskSelected = function(task) {
     return $scope.selectedTask === task;
   };
@@ -395,13 +400,6 @@ function TasksCtrl(TaskService, $scope, $location, $stateParams) {
   };
   $scope.changeSubtaskCompletedStatus = function() {
     TaskService.updateTask('subtasks');
-  };
-  $scope.filesChanged = function(elem) {
-    $scope.files = elem.files;
-    $scope.$apply();
-  };
-  $scope.uploadAttachment = function(e) {
-    TaskService.uploadAttachment(e, $scope.files);
   };
   $scope.deleteAttachment = function(attachment) {
     TaskService.deleteAttachment(attachment);
@@ -553,19 +551,89 @@ angular.module('teamList')
   });
 
 angular.module('teamList')
-  .directive('fileInput', ['$parse', 'HandlerService', function($parse, HandlerService) {
+  .directive('fileInput', ['$parse', 'HandlerService', 'FilesService', function($parse, HandlerService, FilesService) {
     return {
       restrict: 'A',
+      // scope: true,
       link: function(scope, elem, attrs) {
-        elem.bind('change', function() {
-          console.log(elem[0].files[0].size);
-          if (elem[0].files[0].size > 100000000) {
-            HandlerService.handleError({err: 'the files\'s size must be under 100 Mb'});
-            return elem[0].value = null;
+        var input = elem.find('input'),
+            dropzone = elem.find('label');
+            thumbnailImg = elem.find('img')[0],
+            _files = FilesService.files,
+            dropzoneDefaultText = '<strong>Drag file</strong> here or <strong>click to choose</strong> one';
+        FilesService.onUploaded = onUploaded;
+        changeDropzoneText();
+
+        elem.bind('submit', onSubmit);
+        input.bind('change', onInputChange);
+        dropzone.bind('drag dragstart dragend dragover dragenter dragleave drop', dropZonePrevent);
+        dropzone.bind('dragover dragenter', onDragOver);
+        dropzone.bind('dragleave dragend drop', onDragLeave);
+        dropzone.bind('drop', onDrop);
+
+        function onInputChange(e) {
+          handleFile(input[0].files[0]);
+        }
+        function dropZonePrevent(e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        function onDragOver() {
+          dropzone[0].classList.add('dragover');
+        }
+        function onDragLeave() {
+          dropzone[0].classList.remove('dragover');
+        }
+        function onDrop(e) {
+          handleFile(e.dataTransfer.files[0]);
+        }
+        function handleFile(file) {
+          if (!file) {
+            thumbnailImg.classList.remove('visible');
+            _files.length = 0;
+            changeDropzoneText();
+            return;
           }
-          $parse(attrs.fileInput)
-            .assign(scope, elem[0].files);
+          console.log(file.size);
+          if (file.size > 100000000) {
+            HandlerService.handleError({err: 'the files\'s size must be under 100 Mb'});
+            return input[0].value = '';
+          }
+          _files.length = 0;
+          _files[0] = file;
+          var reader = new FileReader();
+          reader.onload = function(event) {
+            if (!event.target.result.includes('data:image')) {
+              return;
+            }
+            thumbnailImg.src = event.target.result;
+            thumbnailImg.classList.add('visible');
+          }
+          reader.readAsDataURL(file);
+          changeDropzoneText(file.name);
           scope.$apply();
+        }
+        function onSubmit(e) {
+          e.preventDefault();
+          FilesService.upload()
+        }
+        function onUploaded() {
+          elem[0].reset();
+          thumbnailImg.classList.remove('visible');
+          _files.length = 0;
+          changeDropzoneText();
+        }
+        function changeDropzoneText(text) {
+          dropzone[0].innerHTML = text || dropzoneDefaultText;
+        }
+
+        input.on('$destroy', function() {
+          elem.unbind('submit', onSubmit);
+          input.unbind('change', onInputChange);
+          dropzone.unbind('drag dragstart dragend dragover dragenter dragleave drop', dropZonePrevent);
+          dropzone.unbind('dragover dragenter', onDragOver);
+          dropzone.unbind('dragleave dragend drop', onDragLeave);
+          dropzone.unbind('drop', onDrop);
         });
       }
     };
@@ -577,20 +645,27 @@ angular.module('teamList')
 		restrict: "E",
 		link: function(scope, elem, attr) {
 
-			elem.bind('click', function(event) {
+			elem.bind('click', onElemClick);
+      function onElemClick(event) {
         event.stopPropagation();
 				elem.toggleClass('dropdown-active');
 				elem.addClass('active-recent');
-			});
+			}
 
-			$document.bind('click', function(event) {
+			$document.bind('click', onDocClick);
+      function onDocClick(event) {
         event.stopPropagation();
 				// if(!elem.hasClass('active-recent')) {
 				// 	elem.removeClass('dropdown-active');
 				// }
 				elem.removeClass('dropdown-active');
 				elem.removeClass('active-recent');
-			});
+			}
+
+      elem.on('$destroy', function() {
+        elem.unbind('click', onElemClick);
+        $document.unbind('click', onDocClick);
+      });
 
 		}
 	};
@@ -657,6 +732,13 @@ angular.module('teamList')
     this.send = function(msg, data) {
       $rootScope.$broadcast(msg, data);
     };
+  });
+
+angular.module('teamList')
+  .service('FilesService', function() {
+    this.files = [];
+    this.onUpload = undefined;
+    this.onUploaded = undefined;
   });
 
 angular.module('teamList')
@@ -909,6 +991,10 @@ angular.module('teamList')
       this.removeAllNotifs = function(e) {
         e.stopPropagation();
         removeNotif({});
+        for (var prop in that.notifs) {
+          delete that.notifs[prop];
+        }
+        $rootScope.$apply();
       };
 
       function removeNotif(body) {
@@ -939,8 +1025,8 @@ angular.module('teamList')
   );
 
 angular.module('teamList')
-.service('TaskService', ['$q', 'SocketService', '$state', '$http', '$rootScope', 'HandlerService',
-  function($q, SocketService, $state, $http, $rootScope, HandlerService) {
+.service('TaskService', ['$q', 'SocketService', '$state', '$http', '$rootScope', 'HandlerService', 'FilesService',
+  function($q, SocketService, $state, $http, $rootScope, HandlerService, FilesService) {
     console.log('TaskService');
 
     var nameUpdateTimeoutToken,
@@ -950,6 +1036,7 @@ angular.module('teamList')
         that = this;
     this.tasks = {};
     this.searchMode = false;
+    this.files = FilesService.files;
 
 
 
@@ -1062,12 +1149,12 @@ angular.module('teamList')
       });
     };
 
-    this.uploadAttachment = function(e, files) {
-      if (!files) {
+    this.uploadAttachment = FilesService.upload = function() {
+      if (!that.files) {
         return;
       }
       var fd = new FormData();
-      angular.forEach(files, function(file) {
+      angular.forEach(that.files, function(file) {
         fd.append('file', file);
       });
       $http.post('/files/' + that.selectedTask._id, fd, {
@@ -1080,8 +1167,10 @@ angular.module('teamList')
           if(data.err) {
             return HandlerService.handleError(data.err);
           }
-          e.target.reset();
           that.selectedTask.attachments.push(data);
+          if (FilesService.onUploaded) {
+            FilesService.onUploaded();
+          }
           $rootScope.$apply();
         });
     };

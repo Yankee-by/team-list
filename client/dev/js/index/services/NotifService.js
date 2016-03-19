@@ -52,6 +52,10 @@ angular.module('teamList')
       this.removeAllNotifs = function(e) {
         e.stopPropagation();
         removeNotif({});
+        for (var prop in that.notifs) {
+          delete that.notifs[prop];
+        }
+        $rootScope.$apply();
       };
 
       function removeNotif(body) {

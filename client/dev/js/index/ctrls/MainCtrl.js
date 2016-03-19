@@ -9,7 +9,7 @@ function MainCtrl(UserService, $scope, $location, $http, $stateParams, NotifServ
   $scope.removeAllNotifs = NotifService.removeAllNotifs;
   $scope.removeNotif = function(e, notifId) {
     e.stopPropagation();
-    NotifService.removeNotif(notifId);
+    NotifService.removeNotifById(notifId);
   };
 
   UserService.downloadUser();

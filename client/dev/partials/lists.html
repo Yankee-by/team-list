@@ -1,6 +1,6 @@
 <header class="mainHeader">
-  <form class="searchForm" task-search action="#" method="post">
-    <input type="text" placeholder="search">
+  <form class="flex searchForm" task-search action="#" method="post">
+    <input type="text" required placeholder="search">
     <button type="button" class="btn btn-link" name="button">X</button>
   </form>
   <div style="flex-grow:1"></div>
@@ -31,10 +31,10 @@
   </kebab>
 </header>
 
-<div class="main flex">
+<div class="mainCont"><div class="main flex">
   <div class="listsPane panel" ng-controller="ListsCtrl">
 
-    <form action="" class="addListForm" ng-submit="addList($event)">
+    <form action="" class="flex addListForm" ng-submit="addList($event)">
       <input type="text" maxlength="100" ng-model="newListName">
       <button class="btn btn-success">add list</button>
     </form>
@@ -63,14 +63,15 @@
   </div>
 
   <div class="tasksPane flex" ng-controller="TasksCtrl">
-    <div ng-show="currentListId" class="tasksCol panel">
-      <form action="" ng-submit="addTask($event)">
+    <div ng-show="currentListId" class="tasksCol panel" ng-click="unselectTask($event)">
+      <form action="" class="flex" ng-submit="addTask($event)">
         <input type="text" maxlength="100" ng-model="newTaskName">
         <button class="btn btn-success" ng-class="{pressed : filterTasksBy}">add task</button>
       </form>
-      <button class="btn btn-success btnShowCompleted" ng-click="toggleShowOnlyCompleted()">show only completed</button>
+      <input type="checkbox" id="showOnlyCompleted" ng-click="toggleShowOnlyCompleted()">
+      <label  class="btn btn-success" for="showOnlyCompleted">show only completed</label>
       <ul class="tasks">
-        <li class="task flex" ng-click="selectTask(task, true)" ng-repeat="task in tasks" ng-show="task[taskFilterProp]" ng-class="{selected : isTaskSelected(task)}">
+        <li class="task _task flex" ng-click="selectTask(task, true)" ng-repeat="task in tasks" ng-show="task[taskFilterProp]" ng-class="{selected : isTaskSelected(task)}">
           <div angular-ripple></div>
           <kebab>
             <button class="btn btn-link">...</button>
@@ -91,11 +92,13 @@
         </li>
       </ul>
     </div>
-    <div ng-show="selectedTask" class="detailsCol panel flex">
+    <div ng-show="selectedTask.name" class="detailsCol panel flex">
       <input type="text" ng-model="selectedTask.name" maxlength="100" ng-change="updateName()">
+
       <input type="checkbox" ng-click="changeTaskCompletedStatus($event)" ng-model="selectedTask.completed" id="taskCompleted">
       <label class="btn btn-success" for="taskCompleted">completed</label>
-      <form ng-submit="addSubtask()">
+
+      <form ng-submit="addSubtask()" class="flex">
         <input type="text" placeholder="new subtask" maxlength="100" ng-model="newSubtaskName">
         <button class="btn btn-success" ng-click="addSubtask()">add subtask</button>
       </form>
@@ -109,20 +112,28 @@
           <p class="bw done-{{subtask.completed}}">{{subtask.name}}</p>
         </li>
       </ul>
-      <form ng-submit="uploadAttachment($event)" class="uploadAttachmentForm">
-        <input type="file" file-input="files" />
-        <button class="btn btn-success">Upload</button>
+
+      <form file-input class="flex uploadAttachmentForm">
+        <input id="fileUploadInput" type="file"/>
+        <label class="fileDropZone" for="fileUploadInput"></label>
+        <button class="btn btn-success uploadAttachmentBtn">Upload</button>
+        <div class="uploadAttachmentThumbnailContainer">
+          <img src="" class="uploadAttachmentThumbnail" alt="thumbnail" />
+        </div>
       </form>
       <ul class="attachments">
         <li class="attachment" ng-repeat="attachment in selectedTask.attachments">
           <button class="btn btn-default" ng-click="deleteAttachment(attachment)">X</button>
+          <!-- <a href="/files/{{attachment.filename}}">{{attachment.name | limitTo : 40}}</a> -->
           <a href="/files/{{attachment.filename}}">{{attachment.name}}</a>
         </li>
       </ul>
+
       <textarea ng-model="selectedTask.comment" ng-change="updateComment()" maxlength="1500"  placeholder="description" <!-- cols="30" rows="10" -->></textarea>
+
     </div>
   </div>
-</div>
+</div></div>
 <div class="msgBox" id="msgBox">
   <button class="btn" ng-click="closeMsg">X</button>
 </div>

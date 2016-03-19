@@ -15,7 +15,7 @@ var taskSchema = new Schema({
   attachments: [{
       name: String,
       filename: String
-      //preview(img, text)
+      // ,thumbnail: Boolean
     }]
 });
 

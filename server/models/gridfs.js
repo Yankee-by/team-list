@@ -54,8 +54,6 @@ function init(mongoose) {
   });
 
   model.removeAsync = (file) => new Promise((resolve, reject) => {
-    console.log(file);
-    console.log(file.filename);
     gfs.remove({filename: file.filename}, (err) => {
       if (err) {
         return reject(err);
@@ -119,7 +117,6 @@ function init(mongoose) {
 
     writeStream.write(file.data);
     writeStream.end();
-
   });
 
 

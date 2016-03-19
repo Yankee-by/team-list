@@ -1,6 +1,6 @@
 angular.module('teamList')
-.service('TaskService', ['$q', 'SocketService', '$state', '$http', '$rootScope', 'HandlerService',
-  function($q, SocketService, $state, $http, $rootScope, HandlerService) {
+.service('TaskService', ['$q', 'SocketService', '$state', '$http', '$rootScope', 'HandlerService', 'FilesService',
+  function($q, SocketService, $state, $http, $rootScope, HandlerService, FilesService) {
     console.log('TaskService');
 
     var nameUpdateTimeoutToken,
@@ -10,6 +10,7 @@ angular.module('teamList')
         that = this;
     this.tasks = {};
     this.searchMode = false;
+    this.files = FilesService.files;
 
 
 
@@ -122,12 +123,12 @@ angular.module('teamList')
       });
     };
 
-    this.uploadAttachment = function(e, files) {
-      if (!files) {
+    this.uploadAttachment = FilesService.upload = function() {
+      if (!that.files) {
         return;
       }
       var fd = new FormData();
-      angular.forEach(files, function(file) {
+      angular.forEach(that.files, function(file) {
         fd.append('file', file);
       });
       $http.post('/files/' + that.selectedTask._id, fd, {
@@ -140,8 +141,10 @@ angular.module('teamList')
           if(data.err) {
             return HandlerService.handleError(data.err);
           }
-          e.target.reset();
           that.selectedTask.attachments.push(data);
+          if (FilesService.onUploaded) {
+            FilesService.onUploaded();
+          }
           $rootScope.$apply();
         });
     };
