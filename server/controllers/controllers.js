@@ -115,10 +115,10 @@ function initCtrls(io) {
         })
     },
 
-    getListsNotifs: (user, socket, data, fn) => {
-      console.log('getListsNotifs', data);
+    getNotifs: (user, socket, data, fn) => {
+      console.log('getNotifs', data);
       var username = user.username;
-      Notification.getListNotifsByTypeAsync(username, 'list')
+      Notification.getListNotifsForUserAsync(username)
         .then((data) => {
           fn(data);
         })
@@ -220,13 +220,21 @@ function initCtrls(io) {
       console.log('deleteList', data);
       var username = user.username;
       var listId = data.listId;
-      List.delete(username, listId)
-        .then((data) => data)
+
+      List.getById(username, listId, 2)
+        .then((list) => {
+          var message = username + ' removed list ' + list.name;
+          for (var watcher of list.watchers) {
+            Notification.createNewAsync(watcher, 'listDeleted', message, listId, 'list')
+            .then((notif) => socket.broadcast.in(listId).emit('listDeleted', {
+              listId: listId,
+              notif: notif
+            }))
+          }
+        })
         .then(() => Task.deleteByListId(username, listId))
         .then(() => gfs.findAndRemoveAsync({'parentListId': listId}))
-        .then(() => socket.broadcast.in(listId).emit('listDeleted', {
-          listId: listId
-        }))
+        .then(() => List.delete(username, listId))
         .then(() => fn({ok: true}))
         .catch((err) => fn({err: err}))
     },
@@ -286,6 +294,16 @@ function initCtrls(io) {
       socket.join(listId);
     },
 
+    getTask: (user, socket, data, fn) => {
+      console.log('getTask', data);
+      var username = user.username;
+      var taskId = data.taskId;
+      List.getOne(username, {tasks: taskId}, 2)
+        .then(() => Task.getById(username, taskId))
+        .then((task) => fn(task))
+        .catch((err) => fn({err: err}));
+    },
+
     addTask: (user, socket, data, fn) => {
       console.log('addTask', data);
       var username = user.username;
@@ -306,14 +324,15 @@ function initCtrls(io) {
         })
         .then(() => {
           var message = username+' added task '+ newTaskName+' to '+list.name;
-          for (watcher of list.watchers) {
-            Notification.createNewAsync(watcher, 'listUpdated', message, list._id, 'list')
+          for (var watcher of list.watchers) {
+            Notification.createNewAsync(watcher, 'taskAdded', message, list._id, 'task', task._id)
             .then((notif) => {
-              socket.broadcast.in(watcher).emit('listUpdated', {
-                listId: _listId,
+              socket.broadcast.in(watcher).emit('taskAdded', {
+                listId: list._id,
+                taskId: task._id,
                 notif: notif
               });
-            })
+            });
           }
         })
         .then((data) => fn(task))
@@ -334,7 +353,25 @@ function initCtrls(io) {
       var username = user.username;
       var taskId = data.taskId;
       var body = data.body;
+      var _task;
       Task.edit(username, taskId, body)
+        .then((task) => {
+          _task = task;
+          return List.getOne(username, {tasks: taskId});
+        })
+        .then((list) => {
+          var message = username + ' edited task ' + _task.name + ' in ' + list.name;
+          for (var watcher of list.watchers) {
+            Notification.createNewAsync(watcher, 'taskUpdated', message, list._id, 'task', _task._id)
+            .then((notif) => {
+              socket.broadcast.in(watcher).emit('taskUpdated', {
+                listId: list._id,
+                taskId: _task._id,
+                notif: notif
+              });
+            });
+          }
+        })
         .then(() => fn({ok: true}))
         .catch((err) => fn({err: err}));
     },
@@ -362,10 +399,11 @@ function initCtrls(io) {
         .then((list) => {
           var message = username+' removed task '+taskName+' from '+list.name;
           for (watcher of list.watchers) {
-            Notification.createNewAsync(watcher, 'listUpdated', message, list._id, 'list')
+            Notification.createNewAsync(watcher, 'taskDeleted', message, list._id, 'task', taskId)
             .then((notif) => {
-              socket.broadcast.in(watcher).emit('listUpdated', {
+              socket.broadcast.in(watcher).emit('taskDeleted', {
                 listId: _listId,
+                taskId: taskId,
                 notif: notif
               });
             })
@@ -381,6 +419,7 @@ function initCtrls(io) {
       var username = user.username;
       var filename = data.filename;
       var taskId;
+      var _task;
 
       gfs.findOneAsync({filename: filename})
       .then((file) => {
@@ -397,6 +436,23 @@ function initCtrls(io) {
           }
         }
         return Task.save(task)
+      })
+      .then((task) => {
+        _task = task;
+        return List.getOne({tasks: task._id});
+      })
+      .then((list) => {
+        var message = username + 'edited task ' + _task.name + ' in ' + list.name;
+        for (var watcher of list.watchers) {
+          Notification.createNewAsync(watcher, 'taskUpdated', message, list._id, 'task', _task._id)
+          .then((notif) => {
+            socket.broadcast.in(watcher).emit('taskAdded', {
+              listId: list._id,
+              taskId: _task._id,
+              notif: notif
+            });
+          });
+        }
       })
       .then(() => fn({ok: true}))
       .catch((err) => fn({err: err}));

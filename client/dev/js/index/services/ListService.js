@@ -143,6 +143,7 @@ angular.module('teamList')
         $rootScope.$apply();
       });
       NotifService.subscribeListOnNotif('sharedListsDeleted', function(data) {
+        //this one fires when user removes all the lists that has been shared w/ them
         console.info('sharedListsDeleted');
         var username = $rootScope.username;
         for (var list in that.lists) {

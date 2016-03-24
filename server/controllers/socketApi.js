@@ -24,14 +24,15 @@ function initSocketRoutings(io) {
     socket.on('editList', ctrls.editList.bind(null, user, socket)); //notification goes
     socket.on('deleteList', ctrls.deleteList.bind(null, user, socket)); //notification goes
     socket.on('shareList', ctrls.shareList.bind(null, user, socket)); //notification goes
-    socket.on('stopWatchingLists', ctrls.stopWatchingLists.bind(null, user, socket)); // maybe notification goes to author
+    socket.on('stopWatchingLists', ctrls.stopWatchingLists.bind(null, user, socket));
     socket.on('enterListRoom', ctrls.enterListRoom.bind(null, user, socket));
-    socket.on('addTask', ctrls.addTask.bind(null, user, socket));
-    socket.on('editTask', ctrls.editTask.bind(null, user, socket));
+    socket.on('getTask', ctrls.getTask.bind(null, user, socket));
+    socket.on('addTask', ctrls.addTask.bind(null, user, socket)); //notification goes
+    socket.on('editTask', ctrls.editTask.bind(null, user, socket)); //notification goes
     socket.on('searchForTasks', ctrls.searchForTasks.bind(null, user, socket));
-    socket.on('deleteTask', ctrls.deleteTask.bind(null, user, socket));
-    socket.on('deleteFile', ctrls.deleteFile.bind(null, user, socket));
-    socket.on('getListsNotifs', ctrls.getListsNotifs.bind(null, user, socket));
+    socket.on('deleteTask', ctrls.deleteTask.bind(null, user, socket)); //notification goes
+    socket.on('deleteFile', ctrls.deleteFile.bind(null, user, socket)); //notification goes
+    socket.on('getNotifs', ctrls.getNotifs.bind(null, user, socket));
     socket.on('removeNotif', ctrls.removeNotif.bind(null, user, socket));
 
   });

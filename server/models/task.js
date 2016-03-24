@@ -44,8 +44,8 @@ model.getById = (username, taskId, securityLvl) => new Promise((resolve, reject)
     if (!task) {
       return reject('no such task');
     }
-    if (err || task.author !== username) {
-      return reject(err || 'unathorized access');
+    if (err) {
+      return reject(err);
     }
     return resolve(task);
   });
@@ -56,8 +56,8 @@ model.getOne = (username, query, securityLvl) => new Promise((resolve, reject) =
     if (!task) {
       return reject('no such task');
     }
-    if (err || task.author !== username) {
-      return reject(err || 'unathorized access');
+    if (err) {
+      return reject(err);
     }
     return resolve(task);
   });

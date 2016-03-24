@@ -77,6 +77,31 @@ model.getById = (username, listId, securityLvl) => new Promise((resolve, reject)
     });
 });
 
+model.getOne = (username, query, securityLvl) => new Promise((resolve, reject) => {
+  List.findOne(query)
+    .exec((err, data) => {
+      if (err) {
+        return reject(err);
+      }
+      if (!data) {
+        return reject('no such list');
+      }
+      switch (securityLvl) {
+        case 1:
+          if (data.author !== username) {
+            return reject('unathorized access')
+          }
+          break;
+        case 2:
+          if ((data.author !== username) && (data.watchers.indexOf(username) === -1)) {
+            return reject('unathorized access')
+          }
+          break;
+      }
+      return resolve(data);
+    });
+});
+
 model.createNew = (username, newListName) => new Promise((resolve, reject) => {
   if (typeof username !== 'string' || typeof newListName !== 'string') {
     return reject('call 911');

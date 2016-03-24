@@ -920,6 +920,7 @@ angular.module('teamList')
         $rootScope.$apply();
       });
       NotifService.subscribeListOnNotif('sharedListsDeleted', function(data) {
+        //this one fires when user removes all the lists that has been shared w/ them
         console.info('sharedListsDeleted');
         var username = $rootScope.username;
         for (var list in that.lists) {
@@ -946,13 +947,13 @@ angular.module('teamList')
 
 
       this.getListsNotifs = function() {
-        SocketService.emit('getListsNotifs', {}, function(data) {
+        SocketService.emit('getNotifs', {}, function(data) {
           if(data.err) {
             return HandlerService.handleError(data.err);
           }
           for (var notif of data) {
-            if(that.lists[notif.itemId]) {
-              that.lists[notif.itemId].notif = notif._id;
+            if(that.lists[notif.type === 'list'] && notif.listId) {
+              that.lists[notif.listId].notif = notif._id;
             }
             that.notifs[notif._id] = notif;
           }
@@ -964,28 +965,41 @@ angular.module('teamList')
         SocketService.on(notifName, function(data) {
           if(data.notif) {
             that.notifs[data.notif._id] = data.notif;
-            if (that.lists[data.notif.itemId]) {
-              that.lists[data.notif.itemId].notif = data.notif._id;
+            if (that.lists[data.notif.listId]) {
+              that.lists[data.notif.listId].notif = data.notif._id;
             }
           }
           callback(data);
         });
       };
 
+      this.subscribeTaskOnNotif = function(notifName, callback) {
+        SocketService.on(notifName, function(data) {
+          if(data.notif) {
+            that.notifs[data.notif._id] = data.notif;
+            // if (that.tasks[data.notif.taskId]) {
+            //   that.tasks[data.notif.taskId].notif = data.notif._id;
+            // }
+          }
+          callback(data);
+        });
+      };
+
+
       this.removeNotifById = function(notifId) {
         removeNotif({_id: notifId});
         delete that.notifs[notifId];
       };
 
-      this.removeItemNotifs = function(itemId) {
-        var list = that.lists[itemId];
+      this.removeItemNotifs = function(listId) {
+        var list = that.lists[listId];
         list.notif = false;
         for (var notif in that.notifs) {
-          if (that.notifs[notif].itemId === list._id) {
+          if (that.notifs[notif].listId === list._id) {
             delete that.notifs[notif];
           }
         }
-        removeNotif({itemId: itemId});
+        removeNotif({listId: listId});
       };
 
       this.removeAllNotifs = function(e) {
@@ -1025,8 +1039,8 @@ angular.module('teamList')
   );
 
 angular.module('teamList')
-.service('TaskService', ['$q', 'SocketService', '$state', '$http', '$rootScope', 'HandlerService', 'FilesService',
-  function($q, SocketService, $state, $http, $rootScope, HandlerService, FilesService) {
+.service('TaskService', ['$q', 'SocketService', '$state', '$http', '$rootScope', 'HandlerService', 'FilesService', 'NotifService',
+  function($q, SocketService, $state, $http, $rootScope, HandlerService, FilesService, NotifService) {
     console.log('TaskService');
 
     var nameUpdateTimeoutToken,
@@ -1149,6 +1163,21 @@ angular.module('teamList')
       });
     };
 
+    this.getTask = function(taskId) {
+      SocketService.emit('getTask', {taskId: taskId}, function(data) {
+        //todo check if data.listId === selectedList._id
+        if(data.err) {
+          HandlerService.handleError(data.err);
+        }
+        if(that.selectedTask && that.selectedTask._id === data._id) {
+          Object.assign(that.selectedTask, data);
+        } else {
+          that.tasks[taskId] = data;
+        }
+        $rootScope.$apply();
+      })
+    }
+
     this.uploadAttachment = FilesService.upload = function() {
       if (!that.files) {
         return;
@@ -1220,6 +1249,25 @@ angular.module('teamList')
       $rootScope.$apply();
     };
 
+    NotifService.subscribeTaskOnNotif('taskUpdated', function(data) {
+      console.info('taskUpdated');
+      if(that.tasks[data.taskId]) {
+        that.getTask(data.taskId);
+      }
+    });
+    NotifService.subscribeTaskOnNotif('taskAdded', function(data) {
+      console.info('taskAdded');
+      if(that.currentListId === data.listId) {
+        that.getTask(data.taskId);
+      }
+    });
+    NotifService.subscribeTaskOnNotif('taskDeleted', function(data) {
+      console.info('taskDeleted');
+      if (that.tasks[data.taskId]) {
+        delete that.tasks[data.taskId];
+      }
+      $rootScope.$apply();
+    });
 
   }
 ]);

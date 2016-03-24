@@ -18,10 +18,10 @@ window.onload = function() {
 
 
   function addEventListeners() {
-    for (var elem of animatedInputs) {
-      elem.onkeydown = handleInputInteraction;
-      elem.onblur = handleInputInteraction;
-      elem.onfocus = handleInputInteraction;
+    for (var elem of Object.keys(animatedInputs)) {
+      animatedInputs[elem].onkeydown = handleInputInteraction;
+      animatedInputs[elem].onblur = handleInputInteraction;
+      animatedInputs[elem].onfocus = handleInputInteraction;
     }
     document.getElementById('signUpForm').onsubmit = submitForm;
     document.getElementById('logInForm').onsubmit = submitForm;

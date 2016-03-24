@@ -1,6 +1,6 @@
 angular.module('teamList')
-.service('TaskService', ['$q', 'SocketService', '$state', '$http', '$rootScope', 'HandlerService', 'FilesService',
-  function($q, SocketService, $state, $http, $rootScope, HandlerService, FilesService) {
+.service('TaskService', ['$q', 'SocketService', '$state', '$http', '$rootScope', 'HandlerService', 'FilesService', 'NotifService',
+  function($q, SocketService, $state, $http, $rootScope, HandlerService, FilesService, NotifService) {
     console.log('TaskService');
 
     var nameUpdateTimeoutToken,
@@ -123,6 +123,21 @@ angular.module('teamList')
       });
     };
 
+    this.getTask = function(taskId) {
+      SocketService.emit('getTask', {taskId: taskId}, function(data) {
+        //todo check if data.listId === selectedList._id
+        if(data.err) {
+          HandlerService.handleError(data.err);
+        }
+        if(that.selectedTask && that.selectedTask._id === data._id) {
+          Object.assign(that.selectedTask, data);
+        } else {
+          that.tasks[taskId] = data;
+        }
+        $rootScope.$apply();
+      })
+    }
+
     this.uploadAttachment = FilesService.upload = function() {
       if (!that.files) {
         return;
@@ -194,6 +209,25 @@ angular.module('teamList')
       $rootScope.$apply();
     };
 
+    NotifService.subscribeTaskOnNotif('taskUpdated', function(data) {
+      console.info('taskUpdated');
+      if(that.tasks[data.taskId]) {
+        that.getTask(data.taskId);
+      }
+    });
+    NotifService.subscribeTaskOnNotif('taskAdded', function(data) {
+      console.info('taskAdded');
+      if(that.currentListId === data.listId) {
+        that.getTask(data.taskId);
+      }
+    });
+    NotifService.subscribeTaskOnNotif('taskDeleted', function(data) {
+      console.info('taskDeleted');
+      if (that.tasks[data.taskId]) {
+        delete that.tasks[data.taskId];
+      }
+      $rootScope.$apply();
+    });
 
   }
 ]);

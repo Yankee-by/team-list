@@ -5,12 +5,14 @@
 }
 
 html {
-    overflow-y: scroll;
+    /* overflow-y: overlay; */
 }
 
 body {
     background: rgba(86, 104, 119, 0.91);
     font-family: 'Titillium Web', sans-serif;
+    padding: 0;
+    margin: 0;
 }
 
 a {
@@ -29,10 +31,9 @@ a:hover {
     padding: 40px;
     min-width: 400px;
     max-width: 600px;
-    margin: 50% auto;
+    margin: 60px auto 0;
     border-radius: 4px;
     box-shadow: 0 4px 10px 4px rgba(19,35,47,.3);
-    transform: translate(0, -50%);
 }
 
 .tab-group {

@@ -6,24 +6,44 @@ var Schema = mongoose.Schema;
 var notificationSchema = new Schema({
   receiver: String,
   purpose: String,
-  itemId: String,
+  listId: String,
+  taskId: String,
   type: String,
   important: Boolean,
   message: String,
   body: Object,
   time: {type: Date, default: Date.now}
 });
+  /*
+    purpose can be:
+
+      listDeleted
+      lIstUpdated
+      listShared
+
+      taskDeleted
+      taskUpdated
+      taskAdded
+
+
+
+    type can be:
+      task
+      list
+      //user
+  */
 
 mongoose.model('Notification', notificationSchema);
 var Notification = mongoose.model('Notification');
 var model = {};
 
 
-model.createNewAsync = (mate, purpose, message, itemId, type) => new Promise((resolve, reject) => {
+model.createNewAsync = (mate, purpose, message, listId, type, taskId) => new Promise((resolve, reject) => {
   var notification = new Notification({
     receiver: mate,
     purpose: purpose,
-    itemId: itemId,
+    listId: listId,
+    taskId: taskId,
     message: message,
     type: type
   });
@@ -35,10 +55,9 @@ model.createNewAsync = (mate, purpose, message, itemId, type) => new Promise((re
   });
 });
 
-model.getListNotifsByTypeAsync = (username, type) => new Promise((resolve, reject) => {
+model.getListNotifsForUserAsync = (username) => new Promise((resolve, reject) => {
   Notification.find({
-    receiver: username,
-    type: type
+    receiver: username
   })
   .exec((err, data) => {
     if (err) {
@@ -47,10 +66,6 @@ model.getListNotifsByTypeAsync = (username, type) => new Promise((resolve, rejec
     if (!data) {
       return resolve([]);
     }
-    // var result = {};
-    // for (var i = 0, n = data.length; i < n; i++) {
-    //   result[data[i]._id] = data[i];
-    // }
     return resolve(data);
   })
 });
